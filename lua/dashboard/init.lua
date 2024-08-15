@@ -218,6 +218,26 @@ function db:load_theme(opts)
     end,
   })
 
+  api.nvim_create_autocmd('WinScrolled', {
+      callback = function(opt)
+        local buf = vim.bo[opt.buf]
+
+        if not buf or buf.filetype ~= "dashboard" then
+             return
+        end
+
+        local header_image = vim.g.header_image
+        if not header_image then return end
+
+        local window = vim.fn.winsaveview()
+
+        local x = math.floor((vim.o.columns - header_image.image_width / 10) / 2)
+        local y = -window.topline + 1
+
+        header_image.global_state.backend.render(header_image, x, y, header_image.image_width, header_image.image_height)
+      end
+  })
+
   api.nvim_create_autocmd('BufEnter', {
     callback = function(opt)
       if vim.bo.filetype == 'dashboard' then
@@ -239,6 +259,16 @@ function db:load_theme(opts)
 
       if #wins == 0 then
         self:restore_user_options(opts)
+      end
+
+      -- remove image if dashboard isn't on screen.
+      local buf = vim.bo[opt.buf]
+      if buf.filetype ~= "dashboard" then
+        local header_image = vim.g.header_image
+        if header_image then
+            header_image.global_state.backend.clear(header_image.id, true)
+            vim.g.header_image = nil
+        end
       end
 
       -- clean up if there are no dashboard buffers at all

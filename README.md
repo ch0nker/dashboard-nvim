@@ -25,7 +25,7 @@
       -- config
     }
   end,
-  dependencies = { {'nvim-tree/nvim-web-devicons'}}
+  dependencies = { {'image.nvim'}, {'nvim-tree/nvim-web-devicons'}}
 }
 ```
 
@@ -40,7 +40,7 @@ use {
       -- config
     }
   end,
-  requires = {'nvim-tree/nvim-web-devicons'}
+  requires = {'image.nvim', 'nvim-tree/nvim-web-devicons'}
 }
 ```
 
@@ -75,6 +75,7 @@ the `config` field is used for theme. general field
 ```lua
 config = {
   header -- type is table def
+  image -- path/url to image
   week_header = {
     enable  --boolean use a week header
     concat  --concat string after time string line

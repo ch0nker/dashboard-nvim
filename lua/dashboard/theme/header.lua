@@ -1,4 +1,5 @@
-local api = vim.api
+local api, fn = vim.api, vim.fn
+local has_image, image_api = pcall(require, "image")
 local utils = require('dashboard.utils')
 
 local function week_ascii_text()
@@ -108,9 +109,57 @@ local function generate_header(config)
     vim.bo[config.bufnr].modifiable = true
   end
   if not config.command then
+    if config.image then
+        if not has_image then
+            local err = "dashboard.nvim: image module not found, please install image.nvim"
+            api.nvim_err_writeln(err)
+            error(err)
+        end
+
+        local function render_image(image)
+            if image == nil then return end
+
+            local window = fn.winsaveview()
+
+            local x = math.floor((vim.o.columns - image.image_width / 10) / 2)
+            local y = -window.topline + 1
+
+            if vim.g.header_image then
+                image = vim.g.header_image
+                image.global_state.backend.render(image, x, y, image.image_width, image.image_height)
+            else
+                image:render({
+                    x=x,
+                    y=y
+                })
+            end
+
+            local filler_lines = {}
+            for _ = 0, math.floor((image.image_height / 100) * 4) do
+                table.insert(filler_lines, (" "):rep(vim.o.columns))
+            end
+
+            api.nvim_buf_set_lines(config.bufnr, 0, -1, false, filler_lines)
+
+            vim.g.header_image = image
+        end
+        if not config.image:match("^https") then
+            render_image(image_api.from_file(config.image, {
+                width = vim.o.columns,
+                height = vim.o.lines
+            }))
+            return
+        end
+        image_api.from_url(config.image, {
+            width = vim.o.columns,
+            height = vim.o.lines
+        }, render_image)
+
+        return
+    end
     local header = config.week_header
         and config.week_header.enable
-        and week_header(config.week_header.concat, config.week_header.append)
+        and week_header(config.week_heaider.concat, config.week_header.append)
       or (config.header or default_header())
     api.nvim_buf_set_lines(config.bufnr, 0, -1, false, utils.center_align(header))
 
